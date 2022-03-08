@@ -10,7 +10,7 @@ const Tab = createMaterialBottomTabNavigator()
 // @refresh reset
 const MainNavigator = () => {
   return (
-    <Tab.Navigator barStyle={{ backgroundColor: '#694fad' }}>
+    <Tab.Navigator barStyle={{ backgroundColor: '#2946c6' }}>
       <Tab.Screen
         name="Home"
         component={DashboardContainer}

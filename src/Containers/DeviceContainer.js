@@ -24,16 +24,21 @@ import ConnectionSuccess from '@/LottieFiles/ConnectionSuccess.json'
 
 import LinearGradient from 'react-native-linear-gradient'
 import AnimatedEllipsis from '@/Components/AnimatedEllipsis'
-import { BleManager } from 'react-native-ble-plx'
 import base64 from 'react-native-base64'
 import { navigateAndSimpleReset } from '@/Navigators/utils'
+import { BleManager } from 'react-native-ble-plx'
+import PushNotification, { Importance } from 'react-native-push-notification'
+import { showMessage } from 'react-native-flash-message'
+
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+import manager from '@/Config/manageBluetooth'
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
 }
-const manager = new BleManager()
 
 const BluetoothContainer = () => {
   const { t } = useTranslation()
@@ -41,9 +46,10 @@ const BluetoothContainer = () => {
   const dispatch = useDispatch()
   const [isItInScanMode, setScanMode] = useState(false)
   const [connected, setConnected] = useState(false)
+  const [bluetoothState, setBluetoothState] = useState('PoweredOff')
 
   const [viewStyle, setViewStyle] = useState({})
-  const startDeviceScan = () => {
+  const startDeviceScan = async () => {
     console.log('startDeviceScan')
     manager.startDeviceScan(
       null,
@@ -61,16 +67,58 @@ const BluetoothContainer = () => {
               setTimeout(() => {
                 setConnected(true)
               }, 2000)
-              /*   device
+              device
                 .discoverAllServicesAndCharacteristics()
-                .then(result => {
+                .then(async result => {
+                  device.onDisconnected(() => {
+                    console.log('disconnected')
+
+                    showMessage({
+                      message: 'Device Disconnected',
+                      description: ' Please check connection with device',
+                      icon: 'warning',
+                      type: 'warning',
+                    })
+                  })
+
                   device.monitorCharacteristicForService(
                     '4b7c1487-9c7b-441a-8441-45c1f2a69c7e',
                     '5773ae67-0874-4aff-8d73-84f984ce959b',
-                    (error, Characteristic) => {
+                    async (error, Characteristic) => {
                       console.log(error)
                       console.log('characteristic', Characteristic.value)
+
                       const decodedValue = base64.decode(Characteristic.value)
+                      if (decodedValue === 'INHALER_ACTUATED') {
+                        const value = await AsyncStorage.getItem('puffs')
+                        console.log(value)
+                        PushNotification.localNotification({
+                          channelId: 'channel-id', // (required) channelId, if the channel doesn't exist, notification will not trigger.
+
+                          vibrate: true, // (optional) default: true
+                          vibration: 300, // vibration length in milliseconds, ignored if vibrate=false, default: 1000
+
+                          priority: 'high', // (optional) set notification priority, default: high
+                          ignoreInForeground: false, // (optional) if true, the notification will not be visible when the app is in the foreground (useful for parity with how iOS notifications appear). should be used in combine with `com.dieam.reactnativepushnotification.notification_foreground` setting
+                          visibility: 'public',
+                          /* iOS and Android properties */
+                          title: 'Inhaler Actuation Detected', // (optional)
+                          message: `The device detected an actuation`,
+                          playSound: true, // (optional) default: true,
+                          soundName: 'default', // (optional) Sound to play when the notification is shown. Value of 'default' plays the default sound. It can be set to a custom sound such as 'android.resource://com.xyz/raw/my_sound'. It will look for the 'my_sound' audio file in 'res/raw' directory and play it. default: 'default' (default sound is played)
+                        })
+                        if (value) {
+                          const newValue = parseInt(value) + 1
+                          console.log(newValue)
+
+                          await AsyncStorage.setItem(
+                            'puffs',
+                            newValue.toString(),
+                          )
+                        } else {
+                          await AsyncStorage.setItem('puffs', '1')
+                        }
+                      }
                       console.log('characteristic', decodedValue)
                     },
                     'saskkas',
@@ -79,7 +127,7 @@ const BluetoothContainer = () => {
                 .catch(err => {
                   console.log('an error occured ', err)
                 })
-
+              /* 
               manager.writeCharacteristicWithoutResponseForDevice(
                 scannedDevice.id,
                 '4b7c1487-9c7b-441a-8441-45c1f2a69c7e',
@@ -96,7 +144,7 @@ const BluetoothContainer = () => {
   }
   const stopDeviceScan = () => {
     console.log('stopDeviceScan')
-    bleManager.stopDeviceScan()
+    manager.stopDeviceScan()
     setScanMode(false)
   }
   const scanMode = () => {
@@ -129,6 +177,47 @@ const BluetoothContainer = () => {
       console.warn(err)
     }
   }
+  useEffect(async () => {
+    const respState = await manager.state()
+    setBluetoothState(respState)
+  }, [])
+
+  const getBlueoothIcon = () => {
+    switch (bluetoothState) {
+      case 'PoweredOff':
+        return 'bluetooth-off'
+        break
+
+      case 'PoweredOn':
+        return 'bluetooth'
+        break
+      case 'Resetting':
+        return 'bluetooth-off'
+
+        break
+
+      case 'Unauthorized':
+        return 'bluetooth-off'
+
+        break
+      case 'Unknown':
+        return 'bluetooth-off'
+
+        break
+      default:
+        break
+    }
+  }
+
+  useEffect(() => {
+    const subscription = manager.onStateChange(state => {
+      console.log('saddsa')
+
+      if (state === 'PoweredOn') {
+        setBluetoothState('PoweredOn')
+      }
+    }, true)
+  })
   useEffect(() => {
     requestLocationPermission()
   }, [])
@@ -195,7 +284,9 @@ const BluetoothContainer = () => {
               <Button
                 mode="contained"
                 color="#fff"
-                onPress={() => {}}
+                onPress={() => {
+                  stopDeviceScan()
+                }}
                 style={{ borderRadius: 40 }}
                 contentStyle={{ padding: 10 }}
               >
@@ -223,7 +314,7 @@ const BluetoothContainer = () => {
                 }}
               >
                 <MaterialCommunityIcons
-                  name="bluetooth"
+                  name={getBlueoothIcon()}
                   size={80}
                   color="#2946c6"
                 />
