@@ -1,5 +1,5 @@
 export default {
-  welcome: 'Welcome to React Native SmartInhaler by TheCodingMachine',
+  welcome: 'Welcome to Smart Inhaler',
   actions: {
     continue: 'Continue',
   },

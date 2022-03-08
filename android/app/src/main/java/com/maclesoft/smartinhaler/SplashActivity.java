@@ -1,4 +1,4 @@
-package com.smartinhaler;
+package com.maclesoft.smartinhaler;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;

@@ -3,13 +3,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { DashboardContainer, DeviceContainer } from '@/Containers'
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import Ionicons from 'react-native-vector-icons/Ionicons'
 
 const Tab = createMaterialBottomTabNavigator()
 
 // @refresh reset
 const MainNavigator = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator barStyle={{ backgroundColor: '#694fad' }}>
       <Tab.Screen
         name="Home"
         component={DashboardContainer}
@@ -22,17 +23,14 @@ const MainNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Device"
-        activeColor="#f0edf6"
+        name="Settings"
         component={DeviceContainer}
-        tabBarColor="#2946c6"
         options={{
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="chip" color={color} size={24} />
+            <Ionicons name="settings" color={color} size={24} />
           ),
 
-          tabBarIconStyle: { display: 'none', backGroundColor: '#2946c6' },
-          tabBarColor: '#2946c6',
+          tabBarIconStyle: { display: 'none' },
           tabBarLabelPosition: 'beside-icon',
         }}
       />

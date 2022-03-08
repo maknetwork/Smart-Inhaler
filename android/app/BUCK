@@ -35,12 +35,12 @@ android_library(
 
 android_build_config(
     name = "build_config",
-    package = "com.smartinhaler",
+    package = "com.maclesoft.smartinhaler",
 )
 
 android_resource(
     name = "res",
-    package = "com.smartinhaler",
+    package = "com.maclesoft.smartinhaler",
     res = "src/main/res",
 )
 
